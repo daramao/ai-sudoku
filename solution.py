@@ -11,8 +11,8 @@ units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
 
 
-def naked_twins(values):
-    """Eliminate values using the naked twins strategy.
+def unique_values(values):
+    """Find all the boxes that has only one value  
 
     Parameters
     ----------
@@ -21,48 +21,11 @@ def naked_twins(values):
 
     Returns
     -------
-    dict
-        The values dictionary with the naked twins eliminated from peers
+    list
+        The list of boxes that has unique values 
     """
-    # Find the twin pairs
-    find_twins = []
-    
-    for box in values:
-        if len(values[box]) == 2:
-           for peer in peers[box]:
-               if values[peer] == values[box]:
-                   find_twins.append([box, peer])
+    return [box for box in values.keys() if len(values[box]) == 1]
 
-    for each_twin in find_twins:
-        overlap_list = [] 
-
-        # Find overlapping lists     
-        for u in unitlist:
-            if each_twin[0] in u and each_twin[1] in u:
-                overlap_list.append(u)
-
-        # Remove digits
-        for overlap_item in overlap_list:
-            for item in overlap_item: 
-                if item != each_twin[0] and item != each_twin[1]:
-                    for each_digit in values[each_twin[0]]:                                 
-                        values[item] = values[item].replace(each_digit, "")
-                        # For visualization only. See assigned_value in utils.
-                        assign_value(values, item, values[item]) 
-                    
-    if len([box for box in values.keys() if len(values[box]) == 0]):
-        return False
-    return values
-
-
-def unique_values(values):
-    """Find all the boxes that has only one value"""
-    unique_lists = []
-    for box in values.keys():
-        if len(values[box]) == 1:
-            unique_lists.append(box)
-                
-    return unique_lists
 
 def eliminate(values):
     """Apply the eliminate strategy to a Sudoku puzzle
@@ -183,6 +146,42 @@ def search(values):
         attempt = search(new_sudoku)
         if attempt:
             return attempt
+
+
+def naked_twins(values):
+    """Eliminate values using the naked twins strategy.
+
+    Parameters
+    ----------
+    values(dict)
+        a dictionary of the form {'box_name': '123456789', ...}
+
+    Returns
+    -------
+    dict
+        The values dictionary with the naked twins eliminated from peers
+    """
+    # Find the twin pairs
+    find_twins = []
+    for box in values:
+        if len(values[box]) == 2:
+            find_twins = [[box, peer] for peer in peers[box] if values[peer] == values[box]]
+
+    for each_twin in find_twins:
+        overlap_list = [u for u in unitlist if each_twin[0] in u and each_twin[1] in u];
+
+        # Remove digits
+        for overlap_item in overlap_list:
+            for item in overlap_item: 
+                if item != each_twin[0] and item != each_twin[1]:
+                    for each_digit in values[each_twin[0]]:                                 
+                        values[item] = values[item].replace(each_digit, "")
+                        # For visualization only. See assign_value in utils.
+                        assign_value(values, item, values[item]) 
+                    
+    if len([box for box in values.keys() if len(values[box]) == 0]):
+        return False
+    return values
 
 
 def solve(grid):
